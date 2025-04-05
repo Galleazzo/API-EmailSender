@@ -51,27 +51,29 @@ public class ProductService {
             this.sendMessageToEmail(product);
 
         return modelMapper.map(this.productRepository.save(product), ProductDTO.class);
-    }
+    }private void sendMessageToEmail(Product product) throws IOException {
+    Email from = new Email("paulogalleazzo1@gmail.com");
+    String subject = "ALERTA DE ITENS!!!!";
+    Email to = new Email("danielgalleazzo@gmail.com");
+    Content content = new Content("text/plain", "O item " + product.getName() + ", com o valor de R$" + product.getPrice() + " está com os itens faltando! QUANTIDADE ATUAL: " + product.getQuantity());
+    Mail mail = new Mail(from, subject, to, content);
 
-    private void sendMessageToEmail(Product product) throws IOException {
-        Email from = new Email("paulogalleazzo1@gmail.com");
-        String subject = "ALERTA DE ITENS!!!!";
-        Email to = new Email("danielgalleazzo@gmail.com");
-        Content content = new Content("text/plain", "O item " + product.getName() + ", com o valor de R$" + product.getPrice() + " esta com os itens faltando! QUANTIDADE ATUAL: " + product.getQuantity());
-        Mail mail = new Mail(from, subject, to, content);
-
-        SendGrid sg = new SendGrid(this.apiToken);
-        Request request = new Request();
-        try {
-            request.setMethod(Method.POST);
-            request.setEndpoint("mail/send");
-            request.setBody(mail.build());
-            Response response = sg.api(request);
-            System.out.println(response.getStatusCode());
-            System.out.println(response.getBody());
-            System.out.println(response.getHeaders());
-        } catch (IOException ex) {
-            throw ex;
+    SendGrid sg = new SendGrid(this.apiToken);
+    Request request = new Request();
+    try {
+        request.setMethod(Method.POST);
+        request.setEndpoint("mail/send");
+        request.setBody(mail.build());
+        Response response = sg.api(request);
+        if (response.getStatusCode() >= 200 && response.getStatusCode() < 300) {
+            System.out.println("Email enviado com sucesso!");
+        } else {
+            System.out.println("Falha ao enviar email. Código de status: " + response.getStatusCode());
+            System.out.println("Corpo da resposta: " + response.getBody());
         }
+    } catch (IOException ex) {
+        System.out.println("Erro ao tentar enviar o email: " + ex.getMessage());
+        throw ex;
     }
+}
 }
