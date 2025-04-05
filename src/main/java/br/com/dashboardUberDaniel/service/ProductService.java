@@ -21,57 +21,63 @@ import java.util.Optional;
 @Service
 public class ProductService {
 
-    @Autowired
-    private ProductRepository productRepository;
+	@Autowired
+	private ProductRepository productRepository;
 
-    @Autowired
-    private ModelMapper modelMapper;
+	@Autowired
+	private ModelMapper modelMapper;
 
-    @Value("${api_key_sendGrid}")
-    private String apiToken;
+	@Value("${api_key_sendGrid}")
+	private String apiToken;
 
-    public ProductDTO save(ProductDTO productDTO) {
-        Product product = new Product();
-        product.setName(productDTO.getName());
-        product.setPrice(productDTO.getPrice());
-        product.setQuantity(productDTO.getQuantity());
+	public ProductDTO save(ProductDTO productDTO) {
+		Product product = new Product();
+		product.setName(productDTO.getName());
+		product.setPrice(productDTO.getPrice());
+		product.setQuantity(productDTO.getQuantity());
 
-        return modelMapper.map(this.productRepository.save(product), ProductDTO.class);
-    }
+		return modelMapper.map(this.productRepository.save(product), ProductDTO.class);
+	}
 
-    public ProductDTO update(Long id, ProductDTO productDTO) throws IOException {
-        Optional<Product> productOp = this.productRepository.findById(id);
-        Product product = productOp.get();
+	public ProductDTO update(Long id, ProductDTO productDTO) throws IOException {
+		Optional<Product> productOp = this.productRepository.findById(id);
+		Product product = productOp.get();
 
-        product.setName(productDTO.getName());
-        product.setPrice(productDTO.getPrice());
-        product.setQuantity(productDTO.getQuantity());
+		product.setName(productDTO.getName());
+		product.setPrice(productDTO.getPrice());
+		product.setQuantity(productDTO.getQuantity());
 
-        if (product.getQuantity() == 0)
-            this.sendMessageToEmail(product);
+		if (product.getQuantity() == 0)
+			this.sendMessageToEmail(product);
 
-        return modelMapper.map(this.productRepository.save(product), ProductDTO.class);
-    }
+		return modelMapper.map(this.productRepository.save(product), ProductDTO.class);
+	}
 
-    private void sendMessageToEmail(Product product) throws IOException {
-        Email from = new Email("paulogalleazzo1@gmail.com");
-        String subject = "ALERTA DE ITENS!!!!";
-        Email to = new Email("danielgalleazzo@gmail.com");
-        Content content = new Content("text/plain", "O item " + product.getName() + ", com o valor de R$" + product.getPrice() + " esta com os itens faltando! QUANTIDADE ATUAL: " + product.getQuantity());
-        Mail mail = new Mail(from, subject, to, content);
+	private void sendMessageToEmail(Product product) throws IOException {
+		Email from = new Email("paulogalleazzo1@gmail.com");
+		String subject = "ALERTA DE ITENS!!!!";
+		Email to = new Email("danielgalleazzo@gmail.com");
+		Content content = new Content("text/plain", "O item " + product.getName() + ", com o valor de R$"
+				+ product.getPrice() + " está com os itens faltando! QUANTIDADE ATUAL: " + product.getQuantity());
+		Mail mail = new Mail(from, subject, to, content);
 
-        SendGrid sg = new SendGrid(this.apiToken);
-        Request request = new Request();
-        try {
-            request.setMethod(Method.POST);
-            request.setEndpoint("mail/send");
-            request.setBody(mail.build());
-            Response response = sg.api(request);
-            System.out.println(response.getStatusCode());
-            System.out.println(response.getBody());
-            System.out.println(response.getHeaders());
-        } catch (IOException ex) {
-            throw ex;
-        }
-    }
+		SendGrid sg = new SendGrid(this.apiToken);
+		Request request = new Request();
+		try {
+			request.setMethod(Method.POST);
+			request.setEndpoint("mail/send");
+			request.setBody(mail.build());
+			Response response = sg.api(request);
+			if (response.getStatusCode() >= 200 && response.getStatusCode() < 300) {
+				System.out.println("Email enviado com sucesso!");
+			} else {
+				System.out.println("Falha ao enviar email. Código de status: " + response.getStatusCode());
+				System.out.println(response.getBody());
+			}
+			System.out.println(response.getHeaders());
+		} catch (IOException ex) {
+			System.out.println("Erro ao enviar email: " + ex.getMessage());
+			throw ex;
+		}
+	}
 }
