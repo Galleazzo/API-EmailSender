@@ -12,16 +12,18 @@ import java.io.IOException;
 @RequestMapping("/product")
 public class ProductController {
 
-    @Autowired
-    private ProductService productService;
+	@Autowired
+	private ProductService productService;
 
-    @PostMapping
-    public ProductDTO save(@RequestBody ProductDTO productDTO) {
-        return this.productService.save(productDTO);
-    }
+	@PostMapping
+	public ProductDTO save(@RequestBody ProductDTO productDTO) {
+		return this.productService.save(productDTO);
+	}
 
-    @PatchMapping("/{id}")
-    public ProductDTO update(@PathVariable Long id, @RequestBody ProductDTO productDTO) throws IOException {
-        return this.productService.update(id, productDTO);
-    }
+	@PatchMapping("/{id}")
+	public ProductDTO update(@PathVariable Long id, @RequestBody ProductDTO productDTO) throws IOException {
+		ProductDTO updatedProduct = this.productService.update(id, productDTO);
+		System.out.println("Produto com ID " + id + " atualizado com sucesso.");
+		return updatedProduct;
+	}
 }
