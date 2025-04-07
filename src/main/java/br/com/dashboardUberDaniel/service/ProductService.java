@@ -14,6 +14,9 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import java.util.NoSuchElementException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Optional;
@@ -41,7 +44,7 @@ public class ProductService {
 
 	public ProductDTO update(Long id, ProductDTO productDTO) throws IOException {
 		Optional<Product> productOp = this.productRepository.findById(id);
-		if (!productOp.isPresent()) {
+		if (productOp.isEmpty()) {
 			throw new NoSuchElementException("Produto com ID " + id + " não encontrado.");
 		}
 
@@ -51,13 +54,14 @@ public class ProductService {
 		product.setPrice(productDTO.getPrice());
 		product.setQuantity(productDTO.getQuantity());
 
-		if (product.getQuantity() == 0)
+		if (product.getQuantity() == 0) {
 			this.sendMessageToEmail(product);
+		}
 
 		Product savedProduct = this.productRepository.save(product);
 
 		Logger logger = LoggerFactory.getLogger(getClass());
-		logger.info("Produto com ID " + id + " atualizado com sucesso.");
+		logger.info("Produto com ID {} atualizado com sucesso.", id);
 
 		return modelMapper.map(savedProduct, ProductDTO.class);
 	}
