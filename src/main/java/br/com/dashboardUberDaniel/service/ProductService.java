@@ -41,6 +41,10 @@ public class ProductService {
 
 	public ProductDTO update(Long id, ProductDTO productDTO) throws IOException {
 		Optional<Product> productOp = this.productRepository.findById(id);
+		if (!productOp.isPresent()) {
+			throw new NoSuchElementException("Produto com ID " + id + " não encontrado.");
+		}
+
 		Product product = productOp.get();
 
 		product.setName(productDTO.getName());
@@ -50,7 +54,12 @@ public class ProductService {
 		if (product.getQuantity() == 0)
 			this.sendMessageToEmail(product);
 
-		return modelMapper.map(this.productRepository.save(product), ProductDTO.class);
+		Product savedProduct = this.productRepository.save(product);
+
+		Logger logger = LoggerFactory.getLogger(getClass());
+		logger.info("Produto com ID " + id + " atualizado com sucesso.");
+
+		return modelMapper.map(savedProduct, ProductDTO.class);
 	}
 
 	private void sendMessageToEmail(Product product) throws IOException {
